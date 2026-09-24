@@ -29,5 +29,6 @@ node publisher/bin/expo-updates-php.js rollback --embedded --server https://exam
 
 `rollback --update` は指定した古いUpdateのAssetを参照する新しいIDと日時のUpdateを発行します。`promote --update ID --from preview --to production` も同じく再署名し、Assetをコピーしません。署名鍵は `OTA_PRIVATE_KEY_PATH`、Tokenは `OTA_TOKEN` でも指定できます。
 
-#ライセンス
+# ライセンス
+
 MITライセンス
