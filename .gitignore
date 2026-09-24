@@ -1,0 +1,12 @@
+server/config/config.php
+server/config/*.pem
+server/storage/*
+!server/storage/.gitkeep
+node_modules/
+.tmp/
+.env
+*.key
+*.p12
+examples/ota-smoke/.expo/
+examples/ota-smoke/dist/
+examples/ota-smoke/certificate.pem

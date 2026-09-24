@@ -1,0 +1,9 @@
+{
+  "name": "expo-updates-php",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": { "expo-updates-php": "./bin/expo-updates-php.js" },
+  "engines": { "node": ">=20" },
+  "scripts": { "test": "node --test" }
+}

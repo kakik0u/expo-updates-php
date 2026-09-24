@@ -1,0 +1,7 @@
+# セキュリティと運用
+
+秘密鍵は開発PC/CIのみで保持します。PHPには検証用の公開証明書だけを置きます。`server/config/config.php`、Storage、バックアップはWeb公開外です。HTTPSを使い、Tokenは環境変数でPublisherへ渡します。DBにはSHA-256のToken hashだけを保存します。PHPログにTokenを出さないでください。
+
+Manifestは署名済みJSONの元バイト列を保存・返送します。AssetのSHA-256もサーバーで再計算し、Finalize時に再検証します。公開済みAsset URLは不変です。誤公開時は対象Updateを無効化した後、古い内容から新しいUpdateを再発行します。GCは未参照で24時間以上古いAssetのみを対象にします。
+
+Token失効、証明書更新、DB/Storageバックアップを運用手順に含めます。証明書を更新すると既存Native Buildの信頼鍵が変わらないため、証明書移行には新しいNative Buildが必要です。Header、Multipart、署名、AssetはiOS/AndroidのRelease Buildで検証してください。
