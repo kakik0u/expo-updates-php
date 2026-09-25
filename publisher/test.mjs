@@ -28,11 +28,12 @@ test('publisher signs exact manifests and uploads shared assets once', async () 
   await writeFile(path.join(temp, 'dist/bundles/ios.js'), 'ios bundle');
   await writeFile(path.join(temp, 'dist/bundles/android.js'), 'android bundle');
   await writeFile(path.join(temp, 'dist/assets/logo.png'), Buffer.from('89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000b49444154789c636000020000050001a5f645400000000049454e44ae426082', 'hex'));
+  await writeFile(path.join(temp, 'dist/assets/emoji.zip'), Buffer.from(`504b0506${'00'.repeat(18)}`, 'hex'));
   await writeFile(path.join(temp, 'dist/assetmap.json'), '{}');
-  await writeFile(path.join(temp, 'dist/metadata.json'), JSON.stringify({ version:0, bundler:'metro', fileMetadata: { ios: { bundle:'bundles/ios.js', assets:[{path:'assets/logo.png',ext:'png'}] }, android: { bundle:'bundles/android.js', assets:[{path:'assets/logo.png',ext:'png'}] } } }));
+  await writeFile(path.join(temp, 'dist/metadata.json'), JSON.stringify({ version:0, bundler:'metro', fileMetadata: { ios: { bundle:'bundles/ios.js', assets:[{path:'assets/logo.png',ext:'png'},{path:'assets/emoji.zip',ext:'zip'}] }, android: { bundle:'bundles/android.js', assets:[{path:'assets/logo.png',ext:'png'},{path:'assets/emoji.zip',ext:'zip'}] } } }));
   await writeFile(path.join(temp, 'config.json'), JSON.stringify({ runtimeVersion:'1', name:'Smoke' }));
   await writeFile(path.join(temp, 'key.pem'), privateKey);
-  let uploads = 0, final;
+  let uploads = 0, zipUploads = 0, final;
   const server = http.createServer(async (req, res) => {
     const b = await body(req);
     assert.equal(req.headers.authorization, 'Bearer test-token');
@@ -42,10 +43,12 @@ test('publisher signs exact manifests and uploads shared assets once', async () 
       assert.deepEqual(Object.keys(begin.platforms).sort(), ['android','ios']);
       res.end(JSON.stringify({ releaseId:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', updates:{ ios:{ id:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', createdAt:'2026-09-23T00:00:00.000Z' }, android:{ id:'cccccccc-cccc-4ccc-8ccc-cccccccccccc', createdAt:'2026-09-23T00:00:00.000Z' } } }));
     } else if (req.url.endsWith('/assets/check')) {
-      assert.equal(JSON.parse(b).hashes.length, 3);
+      assert.equal(JSON.parse(b).hashes.length, 4);
       res.end(JSON.stringify({ missing: JSON.parse(b).hashes }));
     } else if (req.url.endsWith('/assets')) {
-      uploads++; res.end('{}');
+      uploads++;
+      if (b.includes('application/zip')) zipUploads++;
+      res.end('{}');
     } else if (req.url.endsWith('/finalize')) {
       final = JSON.parse(b); res.end('{"status":"active"}');
     } else { res.statusCode = 404; res.end('{}'); }
@@ -53,13 +56,15 @@ test('publisher signs exact manifests and uploads shared assets once', async () 
   try {
     const port = await listen(server);
     await run(['publish','--server',`http://localhost:${port}`,'--project','smoke','--export-dir',path.join(temp,'dist'),'--config-json',path.join(temp,'config.json'),'--private-key',path.join(temp,'key.pem')], { OTA_TOKEN:'test-token' });
-    assert.equal(uploads, 3);
+    assert.equal(uploads, 4);
+    assert.equal(zipUploads, 1);
     for (const platform of ['ios','android']) {
       const entry = final.updates[platform];
       const sig = /sig="([^"]+)"/.exec(entry.signature)?.[1];
       assert.ok(createVerify('RSA-SHA256').update(entry.manifest).end().verify(publicKey, Buffer.from(sig,'base64')));
       const manifest = JSON.parse(entry.manifest);
       assert.equal(manifest.assets[0].hash, JSON.parse(final.updates.ios.manifest).assets[0].hash);
+      assert.equal(manifest.assets[1].contentType, 'application/zip');
       assert.equal(manifest.runtimeVersion, '1');
     }
   } finally { await close(server); await rm(temp, { recursive:true, force:true }); }

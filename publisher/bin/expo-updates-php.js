@@ -36,7 +36,7 @@ function run(cwd, ...args) {
 }
 function b64Hash(bytes) { return createHash('sha256').update(bytes).digest('base64url'); }
 function hexHash(bytes) { return createHash('sha256').update(bytes).digest('hex'); }
-const mimes = { png:'image/png', jpg:'image/jpeg', jpeg:'image/jpeg', gif:'image/gif', webp:'image/webp', svg:'image/svg+xml', ttf:'font/ttf', otf:'font/otf', woff:'font/woff', woff2:'font/woff2', mp3:'audio/mpeg', mp4:'video/mp4', json:'application/json', js:'application/javascript', hbc:'application/javascript' };
+const mimes = { png:'image/png', jpg:'image/jpeg', jpeg:'image/jpeg', gif:'image/gif', webp:'image/webp', svg:'image/svg+xml', ttf:'font/ttf', otf:'font/otf', woff:'font/woff', woff2:'font/woff2', mp3:'audio/mpeg', mp4:'video/mp4', zip:'application/zip', json:'application/json', js:'application/javascript', hbc:'application/javascript' };
 function exportPath(root, relative) {
   if (typeof relative !== 'string' || relative.startsWith('/') || relative.includes('\\')) throw new Error(`Invalid export path: ${relative}`);
   const full = path.resolve(root, relative);
